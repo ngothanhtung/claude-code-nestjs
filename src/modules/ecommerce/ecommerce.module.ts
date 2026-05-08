@@ -14,6 +14,8 @@ import { OrderController } from './order/order.controller';
 import { BullModule } from '@nestjs/bull';
 import { MailService } from './queues/mail/mail.service';
 import { MailProcessor } from './queues/mail/mail.processor';
+import { EventsGateway } from './realtime/events.gateway';
+import { TasksService } from './tasks/tasks.service';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { MailProcessor } from './queues/mail/mail.processor';
     OrderService,
     MailService,
     MailProcessor,
+    EventsGateway,
+    TasksService,
   ],
   exports: [TypeOrmModule],
 })

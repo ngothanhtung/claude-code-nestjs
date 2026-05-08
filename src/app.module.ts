@@ -1,14 +1,19 @@
+import { join } from 'path';
+
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
-import type { AppConfig } from './config/configuration';
 import { EcommerceModule } from './modules/ecommerce/ecommerce.module';
-import { BullModule } from '@nestjs/bull';
 
+import type { AppConfig } from './config/configuration';
+import { ServeStaticModule } from '@nestjs/serve-static';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
@@ -45,7 +50,7 @@ import { BullModule } from '@nestjs/bull';
         };
       },
     }),
-
+    ScheduleModule.forRoot(),
     EcommerceModule,
     RouterModule.register([
       {
@@ -53,6 +58,14 @@ import { BullModule } from '@nestjs/bull';
         module: EcommerceModule,
       },
     ]),
+
+    // Static files
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      exclude: ['/api*'],
+      serveRoot: '/',
+      useGlobalPrefix: true,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

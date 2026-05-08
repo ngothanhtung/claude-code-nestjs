@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Realtime Chat with NestJS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at top, #7c3aed 0%, #0f172a 55%);
+    }
+
+    .message-bubble {
+      word-break: break-word;
+    }
+
+    .message-container {
+      margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-slate-100">
+  <div class="mx-auto max-w-6xl px-4 py-10">
+    <div
+      class="rounded-[2rem] border border-white/10 bg-slate-950/90 p-6 shadow-[0_40px_120px_-50px_rgba(15,23,42,0.86)] backdrop-blur-xl">
+      <div class="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-5 shadow-xl shadow-black/20">
+          <div class="mb-6">
+            <p class="text-xs uppercase tracking-[0.4em] text-violet-300">Realtime Chat</p>
+            <h1 class="mt-4 text-3xl font-semibold text-white">Modern NestJS Chat</h1>
+            <p class="mt-3 text-sm leading-6 text-slate-400">Type instantly, see messages update live, and enjoy a polished UI
+              built with Tailwind.</p>
+          </div>
+
+          <div class="rounded-[1.5rem] bg-slate-950/90 p-4 shadow-inner shadow-white/5">
+            <div class="mb-4 flex items-center gap-3">
+              <div class="grid h-12 w-12 place-items-center rounded-3xl bg-violet-500/20 text-violet-200">👥</div>
+              <div>
+                <p class="text-sm font-medium text-white">Active users</p>
+                <p class="text-xs text-slate-500">Random names loaded on open</p>
+              </div>
+            </div>
+            <div class="grid gap-3 text-sm text-slate-200">
+              <span class="flex items-center justify-between rounded-3xl bg-white/5 px-4 py-3">Peter <span
+                  class="text-slate-400">online</span></span>
+              <span class="flex items-center justify-between rounded-3xl bg-white/5 px-4 py-3">John <span
+                  class="text-slate-400">online</span></span>
+              <span class="flex items-center justify-between rounded-3xl bg-white/5 px-4 py-3">Tom <span
+                  class="text-slate-400">online</span></span>
+              <span class="flex items-center justify-between rounded-3xl bg-white/5 px-4 py-3">Tim <span
+                  class="text-slate-400">online</span></span>
+              <span class="flex items-center justify-between rounded-3xl bg-white/5 px-4 py-3">Mary <span
+                  class="text-slate-400">online</span></span>
+              <span class="flex items-center justify-between rounded-3xl bg-white/5 px-4 py-3">Daisy <span
+                  class="text-slate-400">online</span></span>
+            </div>
+          </div>
+        </aside>
+
+        <main class="flex flex-col rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-5 shadow-xl shadow-black/20">
+          <div class="flex items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.4em] text-violet-300">Chat room</p>
+              <h2 class="mt-1 text-2xl font-semibold text-white">Live messaging</h2>
+            </div>
+            <span
+              class="rounded-full bg-violet-500/15 px-3 py-1 text-sm font-medium text-violet-200 ring-1 ring-violet-500/20">Connected</span>
+          </div>
+
+          <div id="chat"
+            class="mt-6 flex-1 space-y-3 overflow-y-auto rounded-[1.5rem] border border-slate-800 bg-slate-950/80 p-5 text-sm shadow-inner"
+            style="min-height: 360px;"></div>
+
+          <div class="mt-6 rounded-[1.5rem] border border-slate-800 bg-slate-950/90 p-5 shadow-inner">
+            <div class="grid gap-3 lg:grid-cols-[1fr_auto]">
+              <input type="text" id="user"
+                class="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20"
+                placeholder="Your name" value="User" />
+              <button id="set-name"
+                class="rounded-2xl bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-400">Set
+                name</button>
+            </div>
+            <div class="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+              <input type="text" id="message"
+                class="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20"
+                placeholder="Type your message" />
+              <button class="rounded-2xl bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                onclick="sendMessage()">Send</button>
+            </div>
+            <p class="mt-3 text-xs text-slate-500">Press Enter to send instantly.</p>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
+  <script>
+    const socket = io('http://localhost:3333');
+    const chat = document.getElementById('chat');
+    const userInput = document.getElementById('user');
+    const messageInput = document.getElementById('message');
+    const setNameButton = document.getElementById('set-name');
+
+    function appendStatus(text) {
+      const div = document.createElement('div');
+      div.className = 'rounded-3xl bg-violet-500/10 px-4 py-3 text-xs text-violet-100 ring-1 ring-violet-500/20';
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function appendMessage(user, text, isSender = false) {
+      const messageContainer = document.createElement('div');
+      messageContainer.className = `flex ${isSender ? 'justify-end' : 'justify-start'} message-container`;
+
+      const bubble = document.createElement('div');
+      bubble.className = `message-bubble rounded-3xl px-4 py-4 shadow-sm max-w-[70%] ${isSender
+          ? 'bg-violet-500/20 text-white border border-violet-500/30'
+          : 'bg-slate-800/90 text-slate-100'
+        }`;
+      bubble.innerHTML = `<span class="block text-xs uppercase tracking-[0.3em] ${isSender ? 'text-violet-200' : 'text-violet-300'
+        }">${user}</span><p class="mt-2 text-sm leading-6">${text}</p>`;
+
+      messageContainer.appendChild(bubble);
+      chat.appendChild(messageContainer);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    socket.on('connect', () => appendStatus('Connected to server'));
+    socket.on('disconnect', () => appendStatus('Disconnected from server'));
+    socket.on('message', (data) => {
+      const currentUser = userInput.value.trim() || 'Anonymous';
+      const isSender = data.user === currentUser;
+      appendMessage(data.user, data.text, isSender);
+    });
+
+    setNameButton.addEventListener('click', () => {
+      if (userInput.value.trim()) {
+        appendStatus(`Name set to ${userInput.value.trim()}`);
+      }
+    });
+
+    function sendMessage() {
+      const user = userInput.value.trim() || 'Anonymous';
+      const text = messageInput.value.trim();
+      if (!text) return;
+      socket.emit('sendMessage', { user, text });
+      messageInput.value = '';
+      messageInput.focus();
+    }
+
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      appendStatus('Loading users...');
+      ['Peter', 'John', 'Tom', 'Tim', 'Mary', 'Daisy'].forEach((name) => {
+        const badge = document.createElement('span');
+        badge.className = 'inline-flex rounded-full bg-slate-800/70 px-3 py-1 text-xs text-slate-200';
+        badge.textContent = name;
+        chat.appendChild(badge);
+      });
+      appendStatus('Random users loaded');
+    });
+  </script>
+</body>
+
+</html>
