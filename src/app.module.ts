@@ -14,6 +14,7 @@ import { EcommerceModule } from './modules/ecommerce/ecommerce.module';
 
 import type { AppConfig } from './config/configuration';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { LmsModule } from './lms/lms.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
@@ -66,6 +67,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
       serveRoot: '/',
       useGlobalPrefix: true,
     }),
+
+    LmsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
