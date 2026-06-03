@@ -10,11 +10,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
+import { CmsModule } from './modules/cms/cms.module';
 import { EcommerceModule } from './modules/ecommerce/ecommerce.module';
 
 import type { AppConfig } from './config/configuration';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { LmsModule } from './lms/lms.module';
+import { LmsModule } from './modules/lms/lms.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
@@ -52,8 +53,18 @@ import { LmsModule } from './lms/lms.module';
       },
     }),
     ScheduleModule.forRoot(),
+    CmsModule,
     EcommerceModule,
+    LmsModule,
     RouterModule.register([
+      {
+        path: 'api/cms',
+        module: CmsModule,
+      },
+      {
+        path: 'api/lms',
+        module: LmsModule,
+      },
       {
         path: 'api/ecommerce',
         module: EcommerceModule,
@@ -67,8 +78,6 @@ import { LmsModule } from './lms/lms.module';
       serveRoot: '/',
       useGlobalPrefix: true,
     }),
-
-    LmsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

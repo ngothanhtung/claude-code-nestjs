@@ -13,6 +13,7 @@ import { Student } from './student.entity';
 @Injectable()
 export class StudentsService {
   constructor(
+    // Chỉ định kết nối 'lms' để lấy repository của module này
     @InjectRepository(Student, 'lms')
     private readonly studentsRepository: Repository<Student>,
   ) {}

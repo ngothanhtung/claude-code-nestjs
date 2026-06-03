@@ -17,6 +17,9 @@ export interface AppConfig {
     port: number;
     password?: string;
   };
+  mongodb: {
+    uri: string;
+  };
   aws: {
     ses: {
       region: string;
@@ -44,6 +47,11 @@ export default (): AppConfig => ({
     host: process.env.REDIS_HOST ?? 'localhost',
     port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
     password: process.env.REDIS_PASSWORD,
+  },
+  mongodb: {
+    uri:
+      process.env.MONGODB_URI ??
+      'mongodb://root:root_password@localhost:27017/cms?authSource=admin',
   },
   aws: {
     ses: {
