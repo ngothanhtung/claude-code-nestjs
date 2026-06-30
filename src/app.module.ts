@@ -16,6 +16,8 @@ import { EcommerceModule } from './modules/ecommerce/ecommerce.module';
 import type { AppConfig } from './config/configuration';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { LmsModule } from './modules/lms/lms.module';
+import { AdventureWorksModule } from './modules/adventure-works/adventure-works.module';
+import { AwModule } from './modules/aw/aw.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
@@ -56,6 +58,8 @@ import { LmsModule } from './modules/lms/lms.module';
     CmsModule,
     EcommerceModule,
     LmsModule,
+    AdventureWorksModule,
+    AwModule,
     RouterModule.register([
       {
         path: 'api/cms',
@@ -68,6 +72,14 @@ import { LmsModule } from './modules/lms/lms.module';
       {
         path: 'api/ecommerce',
         module: EcommerceModule,
+      },
+      {
+        path: 'api/adventure-works',
+        module: AdventureWorksModule,
+      },
+      {
+        path: 'api/aw',
+        module: AwModule,
       },
     ]),
 
