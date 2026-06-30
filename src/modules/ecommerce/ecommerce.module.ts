@@ -1,35 +1,81 @@
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Category } from './category/category.entity';
-import { Product } from './product/product.entity';
-import { Order } from './order/order.entity';
-import { OrderItem } from './order/order-item.entity';
-import { CategoryService } from './category/category.service';
-import { ProductService } from './product/product.service';
-import { OrderService } from './order/order.service';
+
 import { CategoryController } from './category/category.controller';
-import { ProductController } from './product/product.controller';
+import { Category } from './category/category.entity';
+import { CategoryService } from './category/category.service';
+import { CommentController } from './comment/comment.controller';
+import { Comment } from './comment/comment.entity';
+import { CommentService } from './comment/comment.service';
+import { CustomerController } from './customer/customer.controller';
+import { Customer } from './customer/customer.entity';
+import { CustomerService } from './customer/customer.service';
+import { EmployeeController } from './employee/employee.controller';
+import { Employee } from './employee/employee.entity';
+import { EmployeeService } from './employee/employee.service';
+import { GroupController } from './group/group.controller';
+import { Group } from './group/group.entity';
+import { GroupService } from './group/group.service';
+import { OrderItem } from './order/order-item.entity';
 import { OrderController } from './order/order.controller';
-import { BullModule } from '@nestjs/bull';
-import { MailService } from './queues/mail/mail.service';
+import { Order } from './order/order.entity';
+import { OrderService } from './order/order.service';
+import { PostController } from './post/post.controller';
+import { Post } from './post/post.entity';
+import { PostService } from './post/post.service';
+import { ProductController } from './product/product.controller';
+import { Product } from './product/product.entity';
+import { ProductService } from './product/product.service';
+import { SanPhamController } from './san-pham/san-pham.controller';
+import { SanPham } from './san-pham/san-pham.entity';
+import { SanPhamService } from './san-pham/san-pham.service';
 import { MailProcessor } from './queues/mail/mail.processor';
+import { MailService } from './queues/mail/mail.service';
 import { EventsGateway } from './realtime/events.gateway';
 import { TasksService } from './tasks/tasks.service';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([Category, Product, Order, OrderItem]),
+    TypeOrmModule.forFeature([
+      Category,
+      Product,
+      Order,
+      OrderItem,
+      Customer,
+      Employee,
+      Comment,
+      Post,
+      Group,
+      SanPham,
+    ]),
     BullModule.registerQueue({
       name: 'mail-queue',
     }),
   ],
-  controllers: [CategoryController, ProductController, OrderController],
+  controllers: [
+    CategoryController,
+    ProductController,
+    OrderController,
+    CustomerController,
+    EmployeeController,
+    GroupController,
+    PostController,
+    CommentController,
+    SanPhamController,
+  ],
   providers: [
     CategoryService,
     ProductService,
     OrderService,
+    CustomerService,
+    EmployeeService,
+    GroupService,
+    PostService,
+    SanPhamService,
+    CommentService,
     MailService,
     MailProcessor,
     EventsGateway,
