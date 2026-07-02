@@ -3,7 +3,7 @@ import { join } from 'path';
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RouterModule } from '@nestjs/core';
+import { APP_GUARD, RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -18,6 +18,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { LmsModule } from './modules/lms/lms.module';
 import { AdventureWorksModule } from './modules/adventure-works/adventure-works.module';
 import { AwModule } from './modules/aw/aw.module';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
@@ -37,6 +40,20 @@ import { AwModule } from './modules/aw/aw.module';
           synchronize: true,
         };
       },
+    }),
+
+     PassportModule,
+    JwtModule.registerAsync({
+      global: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        return {
+          global: true,
+          secret: configService.get<string>('JWT_SECRET') || 'nestjs-secrect-key',
+          signOptions: { expiresIn: configService.get<number>('JWT_EXPIRES_IN') },
+        };
+      },
+      inject: [ConfigService],
     }),
 
     //* https://docs.nestjs.com/techniques/queues
@@ -92,6 +109,11 @@ import { AwModule } from './modules/aw/aw.module';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+     {
+      provide: APP_GUARD  ,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
