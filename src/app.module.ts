@@ -50,7 +50,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
         return {
           global: true,
           secret: configService.get<string>('JWT_SECRET') || 'nestjs-secrect-key',
-          signOptions: { expiresIn: configService.get<number>('JWT_EXPIRES_IN') },
+          signOptions: { expiresIn: configService.get<number>('JWT_EXPIRES_IN') || 604800 },
         };
       },
       inject: [ConfigService],

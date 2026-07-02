@@ -1,5 +1,7 @@
 export enum RoleName {
+  Root = 'Root',
   Administrators = 'Administrators',
-  Users = 'Users',
   Managers = 'Managers',
+  Members = 'Members',
 }
+
