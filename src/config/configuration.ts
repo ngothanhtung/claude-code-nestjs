@@ -12,6 +12,13 @@ export interface AppConfig {
     password: string;
     name: string;
   };
+  mssql: {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    database: string;
+  };
   redis: {
     host: string;
     port: number;
@@ -42,6 +49,13 @@ export default (): AppConfig => ({
     username: process.env.DB_USERNAME ?? 'postgres',
     password: process.env.DB_PASSWORD ?? 'postgres_password',
     name: process.env.DB_NAME ?? 'claude_code_nestjs',
+  },
+  mssql: {
+    host: process.env.MSSQL_HOST ?? 'localhost',
+    port: parseInt(process.env.MSSQL_PORT ?? '1433', 10),
+    username: process.env.MSSQL_USERNAME ?? '',
+    password: process.env.MSSQL_PASSWORD ?? '',
+    database: process.env.MSSQL_DATABASE ?? 'AdventureWorks',
   },
   redis: {
     host: process.env.REDIS_HOST ?? 'localhost',
