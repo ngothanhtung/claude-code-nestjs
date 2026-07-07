@@ -36,8 +36,10 @@ export class TypeOrmLogger implements DatabaseLogger {
         parameters,
         system: 'NESTJS-API',
       };
-      this.logger.log(`${query} -- Parameters: ${this.stringifyParameters(parameters)}`);
-    } catch (error) {}
+      this.logger.log(data);
+    } catch (error) {
+      this.logger.error('Error occurred while logging query', error);
+    }
   }
 
   logQueryError(error: string, query: string, parameters?: unknown[]) {
@@ -52,8 +54,10 @@ export class TypeOrmLogger implements DatabaseLogger {
         error: `${JSON.stringify(error)}`,
       };
 
-      // this.logger.error(`${query} -- Parameters: ${this.stringifyParameters(parameters)} -- ${error}`);
-    } catch (error) {}
+      this.logger.error(data);
+    } catch (error) {
+      this.logger.error('Error occurred while logging query error', error);
+    }
   }
 
   logQuerySlow(time: number, query: string, parameters?: unknown[]) {
@@ -68,8 +72,10 @@ export class TypeOrmLogger implements DatabaseLogger {
         system: 'NESTJS-API',
       };
 
-      this.logger.warn(`Time: ${time} -- Parameters: ${this.stringifyParameters(parameters)} -- ${query}`);
-    } catch (error) {}
+      this.logger.warn(data);
+    } catch (error) {
+      this.logger.error('Error occurred while logging slow query', error);
+    }
   }
 
   logMigration(message: string) {

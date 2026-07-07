@@ -5,6 +5,7 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
+  HttpStatus,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -48,6 +49,24 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
     }
 
-    response.status(status).json(exception.getResponse());
+    const exceptionResponse = exception.getResponse();
+
+    if (status === HttpStatus.TOO_MANY_REQUESTS) {
+      const message =
+        typeof exceptionResponse === 'string'
+          ? exceptionResponse
+          : (exceptionResponse as { message?: string }).message;
+
+      response.status(status).json({
+        statusCode: status,
+        message,
+        error: 'Too Many Requests',
+        path: request.originalUrl,
+        timestamp: exceptionDetails.timestamp,
+      });
+      return;
+    }
+
+    response.status(status).json(exceptionResponse);
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { CacheableMemory } from 'cacheable';
 import { Keyv } from 'keyv';
 import { join } from 'path';
@@ -8,7 +9,7 @@ import { TasksModule } from '@modules/tasks/tasks.module';
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD, RouterModule } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, RouterModule } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -20,7 +21,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
 import { AdventureWorksModule } from './modules/adventure-works/adventure-works.module';
-import { CmsModule } from './modules/cms/cms.module';
+import { SocialNetworkModule } from './modules/social-network/social-network.module';
 import { EcommerceModule } from './modules/ecommerce/ecommerce.module';
 import { LmsModule } from './modules/lms/lms.module';
 
@@ -31,7 +32,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from '@modules/auth/auth.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { CacheModule } from '@nestjs/cache-manager';
+import { TypeOrmLogger } from '@common/database-loggers/typeorm.logger';
+import { HttpCacheInterceptor } from '@common/interceptors/http-cache.interceptor';
 
+export function toBoolean(value: string | undefined): boolean {
+  return value === 'true';
+}
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -54,6 +60,8 @@ import { CacheModule } from '@nestjs/cache-manager';
           database: db.name,
           autoLoadEntities: true,
           synchronize: true,
+          logging: toBoolean(config.get('dbLogging')),
+          logger: new TypeOrmLogger(),
         };
       },
     }),
@@ -77,6 +85,8 @@ import { CacheModule } from '@nestjs/cache-manager';
             encrypt: true,
             trustServerCertificate: true,
           },
+          logging: toBoolean(config.get('dbLogging')),
+          logger: new TypeOrmLogger(),
         };
       },
     }),
@@ -97,13 +107,14 @@ import { CacheModule } from '@nestjs/cache-manager';
           database: db.database,
           autoLoadEntities: true,
           synchronize: true,
+          logging: toBoolean(config.get('dbLogging')),
+          logger: new TypeOrmLogger(),
         };
       },
     }),
 
     // Database (MongoDB)
     MongooseModule.forRootAsync({
-      connectionName: 'cms',
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService<AppConfig, true>) => {
@@ -173,27 +184,29 @@ import { CacheModule } from '@nestjs/cache-manager';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl: Number(config.get<string>('THROTTLE_TTL', '1')), // 1 second
-          limit: Number(config.get<string>('THROTTLE_LIMIT', '1000')), // 1000 requests
-        },
-        {
-          name: 'short',
-          ttl: 1, // 1 second
-          limit: 50,
-        },
-        {
-          name: 'medium',
-          ttl: 60, // 1 minute
-          limit: 500,
-        },
-        {
-          name: 'long',
-          ttl: 3600, // 1 hour
-          limit: 2000,
-        },
-      ],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: Number(config.get<string>('THROTTLE_TTL', '1000')), // 1 second
+            limit: Number(config.get<string>('THROTTLE_LIMIT', '5')), // 5 requests
+          },
+          {
+            name: 'short',
+            ttl: 1000, // 1 second
+            limit: 50,
+          },
+          {
+            name: 'medium',
+            ttl: 60_000, // 1 minute
+            limit: 500,
+          },
+          {
+            name: 'long',
+            ttl: 3_600_000, // 1 hour
+            limit: 2000,
+          },
+        ],
+      }),
     }),
 
     CacheModule.registerAsync({
@@ -233,7 +246,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     }),
 
     AuthModule,
-    CmsModule,
+    SocialNetworkModule,
     EcommerceModule,
     LmsModule,
     AdventureWorksModule,
@@ -247,8 +260,8 @@ import { CacheModule } from '@nestjs/cache-manager';
     // Register routes for each module
     RouterModule.register([
       {
-        path: 'api/cms',
-        module: CmsModule,
+        path: 'api/social-network',
+        module: SocialNetworkModule,
       },
       {
         path: 'api/lms',
@@ -272,6 +285,10 @@ import { CacheModule } from '@nestjs/cache-manager';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpCacheInterceptor,
     },
   ],
 })

@@ -42,6 +42,7 @@ export interface AppConfig {
       secretAccessKey: string;
     };
   };
+  dbLogging: boolean;
 }
 
 export default (): AppConfig => ({
@@ -90,4 +91,5 @@ export default (): AppConfig => ({
       secretAccessKey: process.env.AWS_SES_SECRET_ACCESS_KEY ?? '',
     },
   },
+  dbLogging: process.env.DB_LOGGING === 'true',
 });
