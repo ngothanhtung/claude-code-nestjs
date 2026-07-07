@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import { Request, Response } from 'express';
 
 import {
@@ -59,10 +60,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       response.status(status).json({
         statusCode: status,
-        message,
+        message: [message || 'Too Many Requests'],
         error: 'Too Many Requests',
-        path: request.originalUrl,
-        timestamp: exceptionDetails.timestamp,
       });
       return;
     }
