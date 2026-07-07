@@ -12,9 +12,9 @@ import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './category.entity';
-import { Public } from '../../../decorators/public.decorator';
-import { Roles } from '../../../decorators/roles.decorator';
-import { RoleName } from '../../../guards/role.enum';
+import { Roles } from '@modules/auth/decorators/roles.decorator';
+import { RoleName } from '@modules/auth/guards/role.enum';
+import { Public } from '@modules/auth/decorators/public.decorator';
 
 @Controller('categories')
 export class CategoryController {
@@ -47,10 +47,9 @@ export class CategoryController {
     return this.service.update(id, dto);
   }
 
-  @Roles(RoleName.Root)
+  @Roles(RoleName.Administrators)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.service.remove(id);
   }
 }
-

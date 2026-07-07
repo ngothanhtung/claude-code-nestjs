@@ -1,4 +1,3 @@
-import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -28,13 +27,6 @@ import { PostService } from './post/post.service';
 import { ProductController } from './product/product.controller';
 import { Product } from './product/product.entity';
 import { ProductService } from './product/product.service';
-import { SanPhamController } from './san-pham/san-pham.controller';
-import { SanPham } from './san-pham/san-pham.entity';
-import { SanPhamService } from './san-pham/san-pham.service';
-import { MailProcessor } from './queues/mail/mail.processor';
-import { MailService } from './queues/mail/mail.service';
-import { EventsGateway } from './realtime/events.gateway';
-import { TasksService } from './tasks/tasks.service';
 
 @Module({
   imports: [
@@ -49,11 +41,7 @@ import { TasksService } from './tasks/tasks.service';
       Comment,
       Post,
       Group,
-      SanPham,
     ]),
-    BullModule.registerQueue({
-      name: 'mail-queue',
-    }),
   ],
   controllers: [
     CategoryController,
@@ -64,7 +52,6 @@ import { TasksService } from './tasks/tasks.service';
     GroupController,
     PostController,
     CommentController,
-    SanPhamController,
   ],
   providers: [
     CategoryService,
@@ -74,12 +61,7 @@ import { TasksService } from './tasks/tasks.service';
     EmployeeService,
     GroupService,
     PostService,
-    SanPhamService,
     CommentService,
-    MailService,
-    MailProcessor,
-    EventsGateway,
-    TasksService,
   ],
   exports: [TypeOrmModule],
 })

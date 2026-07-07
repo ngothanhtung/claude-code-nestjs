@@ -5,14 +5,12 @@ import { Order, OrderStatus } from './order.entity';
 import { OrderItem } from './order-item.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { MailService } from '../queues/mail/mail.service';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(Order) private readonly repo: Repository<Order>,
     private readonly dataSource: DataSource,
-    private readonly mailService: MailService,
   ) {}
 
   async create(dto: CreateOrderDto): Promise<Order> {
@@ -55,13 +53,6 @@ export class OrderService {
           );
         }
       }
-
-      // Send email
-      await this.mailService.sendEmailJob({
-        to: dto.customerEmail,
-        subject: 'Your Order Has Been Placed',
-        body: `Hello ${dto.customerName},\n\nYour order has been placed successfully.`,
-      });
 
       return this.findById(savedOrder.id) as Promise<Order>;
     });

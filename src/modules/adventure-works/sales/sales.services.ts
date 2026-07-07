@@ -1,7 +1,8 @@
+import { DataSource } from 'typeorm';
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { ADVENTURE_WORKS_CONNECTION } from '../adventure-works.constants';
+
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import {
   DatabaseRow,
@@ -15,13 +16,11 @@ interface CountRow {
 @Injectable()
 export class SalesService {
   constructor(
-    @InjectDataSource(ADVENTURE_WORKS_CONNECTION)
+    @InjectDataSource('mssql')
     private readonly dataSource: DataSource,
   ) {}
 
-  findOrders(
-    query: PaginationQueryDto,
-  ): Promise<PaginatedResult<DatabaseRow>> {
+  findOrders(query: PaginationQueryDto): Promise<PaginatedResult<DatabaseRow>> {
     return this.findPaginated(
       `SELECT
         SalesOrderID, RevisionNumber, OrderDate, DueDate, ShipDate, Status,

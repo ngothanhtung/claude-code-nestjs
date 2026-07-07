@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { ADVENTURE_WORKS_CONNECTION } from '../adventure-works.constants';
+
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import {
   DatabaseRow,
@@ -15,7 +15,7 @@ interface CountRow {
 @Injectable()
 export class ProductionService {
   constructor(
-    @InjectDataSource(ADVENTURE_WORKS_CONNECTION)
+    @InjectDataSource('mssql')
     private readonly dataSource: DataSource,
   ) {}
 

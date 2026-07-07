@@ -5,7 +5,7 @@ export interface AppConfig {
     methods: string[];
     allowedHeaders: string[];
   };
-  database: {
+  postgres: {
     host: string;
     port: number;
     username: string;
@@ -19,6 +19,14 @@ export interface AppConfig {
     password: string;
     database: string;
   };
+  mysql: {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    database: string;
+  };
+
   redis: {
     host: string;
     port: number;
@@ -43,20 +51,28 @@ export default (): AppConfig => ({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   },
-  database: {
-    host: process.env.DB_HOST ?? 'localhost',
-    port: parseInt(process.env.DB_PORT ?? '5432', 10),
-    username: process.env.DB_USERNAME ?? 'postgres',
-    password: process.env.DB_PASSWORD ?? 'postgres_password',
-    name: process.env.DB_NAME ?? 'claude_code_nestjs',
+  postgres: {
+    host: process.env.POSTGRES_HOST ?? 'localhost',
+    port: parseInt(process.env.POSTGRES_PORT ?? '5432', 10),
+    username: process.env.POSTGRES_USERNAME ?? 'postgres',
+    password: process.env.POSTGRES_PASSWORD ?? 'postgres_password',
+    name: process.env.POSTGRES_NAME ?? 'claude_code_nestjs',
   },
   mssql: {
     host: process.env.MSSQL_HOST ?? 'localhost',
     port: parseInt(process.env.MSSQL_PORT ?? '1433', 10),
-    username: process.env.MSSQL_USERNAME ?? '',
-    password: process.env.MSSQL_PASSWORD ?? '',
+    username: process.env.MSSQL_USERNAME ?? 'developer',
+    password: process.env.MSSQL_PASSWORD ?? '123456789',
     database: process.env.MSSQL_DATABASE ?? 'AdventureWorks',
   },
+  mysql: {
+    host: process.env.MYSQL_HOST ?? 'localhost',
+    port: parseInt(process.env.MYSQL_PORT ?? '3306', 10),
+    username: process.env.MYSQL_USERNAME ?? 'developer',
+    password: process.env.MYSQL_PASSWORD ?? 'developer_password',
+    database: process.env.MYSQL_DATABASE ?? 'claude_code_nestjs',
+  },
+
   redis: {
     host: process.env.REDIS_HOST ?? 'localhost',
     port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
