@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-time Chart with SSE</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <h2>Real-time Chart with SSE (NestJS)</h2>
+  <canvas id="realTimeChart"></canvas>
+  <script>
+    // Initialize Chart.js
+    const ctx = document.getElementById('realTimeChart').getContext('2d');
+    const chartData = {
+      labels: [],
+      datasets: [{
+        label: 'Live Data',
+        borderColor: 'blue',
+        borderWidth: 2,
+        fill: false,
+        data: []
+      }]
+    };
+
+    const myChart = new Chart(ctx, {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: { display: true, text: 'Time' }
+          },
+          y: {
+            title: { display: true, text: 'Value' },
+            suggestedMin: 0,
+            suggestedMax: 100
+          }
+        }
+      }
+    });
+
+    // Connect to SSE
+    const eventSource = new EventSource('/sse/chart-stream');
+
+    eventSource.onmessage = function (event) {
+      const newData = JSON.parse(event.data);
+      chartData.labels.push(new Date(newData.time).toLocaleTimeString());
+      chartData.datasets[0].data.push(newData.value);
+
+      // Keep only last 10 points
+      if (chartData.labels.length > 10) {
+        chartData.labels.shift();
+        chartData.datasets[0].data.shift();
+      }
+
+      myChart.update();
+    };
+
+    eventSource.onerror = function () {
+      console.error("SSE connection lost. Retrying...");
+    };
+  </script>
+</body>
+
+</html>
