@@ -21,6 +21,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN set -eux; \
     printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d; \
     chmod +x /usr/sbin/policy-rc.d; \
+    sed -i \
+        -e 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g' \
+        -e 's|http://security.ubuntu.com|https://security.ubuntu.com|g' \
+        -e 's|http://ports.ubuntu.com|https://ports.ubuntu.com|g' \
+        /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         ca-certificates \
