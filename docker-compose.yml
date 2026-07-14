@@ -1,0 +1,72 @@
+# All-in-one dev stack — aligns with .env values
+# NOTE: MSSQL and PostgreSQL are not included here; use per-service
+# compose files in docker/ for those.
+services:
+  app:
+    image: thanhtungo/nestjs-api:1.0.0
+    restart: always
+    ports:
+      - '3333:3333'
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    restart: always
+    env_file: .env
+    environment:
+      # .env's MYSQL_USERNAME/MYSQL_PASSWORD/MYSQL_DATABASE are forwarded to the container as-is
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  mongo:
+    image: mongo:7.0
+    restart: always
+    environment:
+      # Must match the creds embedded in MONGODB_URI in .env
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root_password
+      MONGO_INITDB_DATABASE: claude_code_nestjs
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD-SHELL', 'echo \'db.runCommand("ping").ok\' | mongosh localhost:27017/claude_code_nestjs --quiet']
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', '-a', '${REDIS_PASSWORD}', '--no-auth-warning', 'incr', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  db_data:
+  mongo_data:
+  redis_data:

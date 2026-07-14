@@ -2,6 +2,7 @@
 .github
 .idea
 .vscode
+.husky
 .env
 .env.*
 !.env.example
@@ -13,3 +14,8 @@ logs
 *.sqlite
 docker/**/db_data
 docs/superpowers
+README.md
+docker-readme.md
+docker-compose.yml
+.claude
+.mcp.json

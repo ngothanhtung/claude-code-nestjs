@@ -1,72 +1,54 @@
-FROM node:22.23.1-bookworm AS builder
+# syntax=docker/dockerfile:1.6
 
-WORKDIR /app
+# ===========================================
+# Stage 1: Build
+# ===========================================
+FROM node:22-alpine AS builder
 
-COPY package.json package-lock.json ./
-RUN npm ci
+# Native modules (sqlite3, mssql) cần build tools
+RUN apk add --no-cache python3 make g++ openssl
 
-COPY tsconfig.json tsconfig.build.json nest-cli.json ./
+WORKDIR /usr/src/app
+
+# Cài tất cả dependencies (bao gồm devDependencies cho build)
+COPY package.json yarn.lock* ./
+RUN yarn install --frozen-lockfile
+
+# Copy source code và build
+COPY tsconfig.json nest-cli.json ./
 COPY src ./src
-COPY public ./public
+RUN yarn build
 
-RUN npm run build && npm prune --omit=dev
+# Sau build xong, xóa devDependencies để giảm kích thước node_modules
+RUN yarn install --frozen-lockfile --production --ignore-scripts
 
+# ===========================================
+# Stage 2: Production runtime (image nhỏ)
+# ===========================================
+FROM node:22-alpine AS production
 
-FROM ubuntu:24.04 AS runtime
-
-ENV DEBIAN_FRONTEND=noninteractive \
-    NODE_ENV=production \
+ENV NODE_ENV=production \
     PORT=3333
 
-RUN set -eux; \
-    printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d; \
-    chmod +x /usr/sbin/policy-rc.d; \
-    sed -i \
-        -e 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g' \
-        -e 's|http://security.ubuntu.com|https://security.ubuntu.com|g' \
-        -e 's|http://ports.ubuntu.com|https://ports.ubuntu.com|g' \
-        /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        gnupg \
-        gosu \
-        mysql-server \
-        postgresql \
-        postgresql-client \
-        redis-server \
-        supervisor; \
-    curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc \
-        | gpg --dearmor -o /usr/share/keyrings/mongodb-server-8.0.gpg; \
-    echo 'deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse' \
-        > /etc/apt/sources.list.d/mongodb-org-8.0.list; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends mongodb-org mongodb-mongosh; \
-    rm -rf \
-        /var/lib/apt/lists/* \
-        /var/lib/mysql/* \
-        /var/lib/mongodb/* \
-        /var/lib/postgresql/*; \
-    rm -f /usr/sbin/policy-rc.d
+RUN apk add --no-cache openssl
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-COPY --from=builder /usr/local /usr/local
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
+# Copy node_modules đã được prune (chỉ production deps)
+COPY --from=builder --chown=node:node /usr/src/app/node_modules ./node_modules
+# Copy compiled JavaScript
+COPY --from=builder --chown=node:node /usr/src/app/dist ./dist
+COPY --from=builder --chown=node:node /usr/src/app/package.json ./
 
-COPY docker/all-in-one/entrypoint.sh /usr/local/bin/container-entrypoint.sh
-COPY docker/all-in-one/start-api.sh /usr/local/bin/start-api.sh
-COPY docker/all-in-one/supervisord.conf /etc/supervisor/supervisord.conf
+# Thư mục upload (MulterModule) — cần write permission
+RUN mkdir -p /usr/src/app/public/uploads \
+    && chown -R node:node /usr/src/app/public
 
-VOLUME ["/data"]
+USER node
 
-EXPOSE 3333 5432 3306 27017 6379
+EXPOSE 3333
 
-HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=5 \
-  CMD curl --fail --silent --show-error "http://127.0.0.1:${PORT}/" >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD node -e "require('http').get('http://127.0.0.1:'+process.env.PORT, r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"
 
-ENTRYPOINT ["/usr/local/bin/container-entrypoint.sh"]
+CMD ["node", "dist/main.js"]
