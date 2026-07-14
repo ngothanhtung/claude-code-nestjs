@@ -70,6 +70,46 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
+## Docker: API and databases in one container
+
+The root `Dockerfile` packages the NestJS API together with PostgreSQL, MySQL, MongoDB, and Redis. Microsoft SQL Server is not bundled: `MSSQL_HOST` in `.env` must point to an external SQL Server that is reachable from the container.
+
+Build the image:
+
+```bash
+docker build --progress=plain -t claude-code-nestjs:all-in-one .
+docker image inspect claude-code-nestjs:all-in-one \
+  --format '{{json .Config.Entrypoint}} {{json .Config.Healthcheck.Test}} {{json .Config.Volumes}}'
+```
+
+Create a persistent volume and run the container with the production-shaped environment:
+
+```bash
+docker volume create claude-code-data
+docker rm -f claude-code-api 2>/dev/null || true
+docker run -d --name claude-code-api --env-file .env \
+  -p 3333:3333 -v claude-code-data:/data \
+  claude-code-nestjs:all-in-one
+```
+
+The `.env` file is supplied only at runtime by `--env-file`; it is excluded from the image build context and must not be copied into the image. All bundled database data is stored under `/data`, so keep the `claude-code-data` volume to preserve it across container recreation.
+
+Check Supervisor, container health, the API, and each bundled database with:
+
+```bash
+docker exec claude-code-api supervisorctl status
+docker inspect claude-code-api --format '{{.State.Health.Status}}'
+curl --fail http://127.0.0.1:3333/
+docker exec claude-code-api bash -lc 'PGPASSWORD="$POSTGRES_PASSWORD" pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USERNAME"'
+docker exec claude-code-api bash -lc 'MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_USERNAME" ping'
+docker exec claude-code-api bash -lc 'mongosh "$MONGODB_URI" --quiet --eval "db.adminCommand({ ping: 1 })"'
+docker exec claude-code-api bash -lc 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" ping'
+```
+
+Only the API port is required on the host. The bundled database services bind to loopback inside the all-in-one container by design, so publishing their ports also requires changing their bind configuration. Prefer `docker exec` for database administration.
+
+This image is intended for development, demos, and simple single-host deployments. The API and all bundled databases share one lifecycle, resource limit, failure domain, and volume; split them into separate services before scaling or adding high availability.
+
 ## Resources
 
 Check out a few resources that may come in handy when working with NestJS:
