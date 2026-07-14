@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.vscode
+.env
+.env.*
+!.env.example
+node_modules
+dist
+coverage
+logs
+*.log
+*.sqlite
+docker/**/db_data
+docs/superpowers
