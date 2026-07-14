@@ -3,7 +3,7 @@
 # ===========================================
 # Stage 1: Build
 # ===========================================
-FROM node:22-alpine AS builder
+FROM node:24.15.0-alpine AS builder
 
 # Native modules (sqlite3, mssql) cần build tools
 RUN apk add --no-cache python3 make g++ openssl
@@ -25,7 +25,7 @@ RUN yarn install --frozen-lockfile --production --ignore-scripts
 # ===========================================
 # Stage 2: Production runtime (image nhỏ)
 # ===========================================
-FROM node:22-alpine AS production
+FROM node:24.15.0-alpine AS production
 
 ENV NODE_ENV=production \
     PORT=3333
